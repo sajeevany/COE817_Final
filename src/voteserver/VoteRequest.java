@@ -1,14 +1,16 @@
 package voteserver;
 
-public class VoteRequest {
+import java.io.Serializable;
+
+public class VoteRequest implements Serializable{
 
 	private String clientID = null;
 	private String password = null;
 	private int validationNumber = 0;
-	private voteID myVote;
+	private voteID myVote = null;
 	
 	//enum of possible candidates in election
-	public enum voteID
+	public static enum voteID
 	{
 		Arjun, Sajeevan, Krishna, Anmol
 	}
@@ -19,7 +21,9 @@ public class VoteRequest {
 		this.clientID = clientID;
 		this.password = password;
 		this.validationNumber = 0;
-		this.myVote = myVote;
+		
+		if (myVote != null)
+			this.myVote = myVote;
 	}
 	
 	//constructor to be used by CLA in response to client vote request

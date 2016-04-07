@@ -1,10 +1,13 @@
 package voteserver;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -50,7 +53,8 @@ class VoteRequestListener
 	{
 		Runnable vrlRunnable = new Runnable()
 		{
-			ObjectInputStream dInStream = null;
+			ObjectInputStream oInStream = null;
+			ObjectOutputStream oOutStream = null;
 			ServerSocket myServerListeningSocket;
 			Socket myIOSocket = null;
 			VoteRequest recievedRequest;
@@ -67,7 +71,9 @@ class VoteRequestListener
 						myIOSocket = myServerListeningSocket.accept();
 					}
 					
-					dInStream = new ObjectInputStream(myIOSocket.getInputStream());
+					oInStream = new ObjectInputStream(new BufferedInputStream(myIOSocket.getInputStream()));
+					oOutStream = new ObjectOutputStream(new BufferedOutputStream(myIOSocket.getOutputStream()));
+									
 				} catch (IOException e1) {
 					e1.printStackTrace();
 					System.err.println("Unable to bind to socket at port " + myListeningPort + 
@@ -78,11 +84,11 @@ class VoteRequestListener
 				while (true)
 				{
 					try {
-						recievedRequest = (VoteRequest) dInStream.readObject();
+						recievedRequest = (VoteRequest) oInStream.readObject();
 						
 						//test receiver
 						System.out.println(recievedRequest.toString());
-						
+						break;
 						
 					} catch (ClassNotFoundException | IOException e) {
 						// TODO Auto-generated catch block

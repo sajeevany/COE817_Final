@@ -32,8 +32,7 @@ public class CLA {
 		{
 			vRListener = new VoteRequestListener("localhost", 10901);
 		}
-		
-		vRListener.startVRListener();
+		new Thread(vRListener.getVRListener()).start();
 	}
 }
 
@@ -100,9 +99,9 @@ class VoteRequestListener
 		return vrlRunnable;		
 	}
 	
-	public void startVRListener()
+	public Runnable getVRListener()
 	{
-		this.myVRListener.run();
+		return this.myVRListener;
 	}
 	
 }

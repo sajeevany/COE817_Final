@@ -52,4 +52,10 @@ public class VoteRequest {
 		return myVote;
 	}
 
+	
+	@Override
+	public String toString() {
+		return "VoteRequest [clientID=" + clientID + ", password=" + password + ", validationNumber=" + validationNumber
+				+ ", myVote=" + myVote + "]";
+	}
 }

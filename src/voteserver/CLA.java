@@ -26,7 +26,7 @@ public class CLA {
 		return myInstance;
 	}
 	
-	private void startListening()
+	public void startListening()
 	{
 		if (vRListener == null)
 		{
@@ -52,15 +52,23 @@ class VoteRequestListener
 		Runnable vrlRunnable = new Runnable()
 		{
 			ObjectInputStream dInStream = null;
-			Socket myListeningSocket;
+			ServerSocket myServerListeningSocket;
+			Socket myIOSocket = null;
 			VoteRequest recievedRequest;
 			
 			@Override
 			public void run() {
 							
 				try {
-					myListeningSocket = new Socket(host,myListeningPort);
-					dInStream = new ObjectInputStream(myListeningSocket.getInputStream());
+					myServerListeningSocket = new ServerSocket(myListeningPort);
+					System.out.println("Waiting for connection");
+					
+					while(myIOSocket == null)
+					{
+						myIOSocket = myServerListeningSocket.accept();
+					}
+					
+					dInStream = new ObjectInputStream(myIOSocket.getInputStream());
 				} catch (IOException e1) {
 					e1.printStackTrace();
 					System.err.println("Unable to bind to socket at port " + myListeningPort + 
@@ -75,6 +83,8 @@ class VoteRequestListener
 						
 						//test receiver
 						System.out.println(recievedRequest.toString());
+						
+						
 					} catch (ClassNotFoundException | IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

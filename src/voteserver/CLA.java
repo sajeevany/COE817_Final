@@ -11,10 +11,11 @@ import java.net.Socket;
 
 public class CLA {
 
+	private VoteRequestListener vRListener = null;
+	
 	private static CLA myInstance = null;
 	private CLA(){}
-	
-	
+		
 	public static CLA getInstance()
 	{
 		if (myInstance == null)
@@ -27,16 +28,27 @@ public class CLA {
 	
 	private void startListening()
 	{
+		if (vRListener == null)
+		{
+			vRListener = new VoteRequestListener("localhost", 10901);
+		}
 		
+		vRListener.startVRListener();
 	}
 }
 
-class voteRequestListener
+class VoteRequestListener
 {
+	private Runnable myVRListener = null;
+	
+	public VoteRequestListener(String host, int myListeningPort)
+	{
+		myVRListener = vRListener(host, myListeningPort);
+	}
+	
 	@SuppressWarnings("unused")
 	private Runnable vRListener(final String host,final int myListeningPort)
 	{
-		
 		Runnable vrlRunnable = new Runnable()
 		{
 			ObjectInputStream dInStream = null;
@@ -75,6 +87,12 @@ class voteRequestListener
 			
 		}; 
 		
-		return null;		
+		return vrlRunnable;		
 	}
+	
+	public void startVRListener()
+	{
+		this.myVRListener.run();
+	}
+	
 }

@@ -1,23 +1,37 @@
 package voteserver;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class CLA {
+public class CLA implements Runnable{
 
-	private VoteRequestListener vRListener = null;
+	private final int myConnectionRequestListeningPort = 10901;
+	private final int maximumClientHandlerThreads = 5;
+	
+	private ClientHandler vRListener = null;
+	private ServerSocket myServerCRLSocket;
+	private ExecutorService executor = Executors.newFixedThreadPool(maximumClientHandlerThreads);
 	
 	private static CLA myInstance = null;
-	private CLA(){}
+	private CLA()
+	{
+		//bind socket for listening
+		try{
+			this.myServerCRLSocket = new ServerSocket(myConnectionRequestListeningPort);
+			System.out.println("Accepting incomming connections");
+			
+		}catch(IOException ioe)
+		{
+			System.err.println("Unable to bind to socket at port " + myConnectionRequestListeningPort + 
+					" and get input stream. Stopping CLA application.");
+			ioe.printStackTrace();
+		}
+	}
 		
 	public static CLA getInstance()
 	{
@@ -29,85 +43,61 @@ public class CLA {
 		return myInstance;
 	}
 	
-	public void startListening()
-	{
-		if (vRListener == null)
+	@Override
+	public void run() {
+		//accept connections and fork thread to handle client
+		while(true)
 		{
-			vRListener = new VoteRequestListener("localhost", 10901);
+			try {
+				Socket clientHandlerSocket = myServerCRLSocket.accept(); //blocking method
+				executor.execute(new ClientHandler(clientHandlerSocket));
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		new Thread(vRListener.getVRListener()).start();
 	}
 }
 
-class VoteRequestListener
+class ClientHandler implements Runnable
 {
-	private Runnable myVRListener = null;
+	private Socket mySocket = null;
+	ObjectInputStream oInStream = null;
+	ObjectOutputStream oOutStream = null;
 	
-	public VoteRequestListener(String host, int myListeningPort)
+	public ClientHandler(Socket myClientHandlingSocket) throws IOException 
 	{
-		myVRListener = vRListener(host, myListeningPort);
+		this.mySocket = myClientHandlingSocket;
 	}
-	
-	@SuppressWarnings("unused")
-	private Runnable vRListener(final String host,final int myListeningPort)
-	{
-		Runnable vrlRunnable = new Runnable()
-		{
-			ObjectInputStream oInStream = null;
-			ObjectOutputStream oOutStream = null;
-			ServerSocket myServerListeningSocket;
-			Socket myIOSocket = null;
-			VoteRequest recievedRequest;
-			
-			@Override
-			public void run() {
-							
-				try {
-					myServerListeningSocket = new ServerSocket(myListeningPort);
-					System.out.println("Waiting for connection");
-					
-					while(myIOSocket == null)
-					{
-						myIOSocket = myServerListeningSocket.accept();
-					}
-					
-					oInStream = new ObjectInputStream(new BufferedInputStream(myIOSocket.getInputStream()));
-					oOutStream = new ObjectOutputStream(new BufferedOutputStream(myIOSocket.getOutputStream()));
-									
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					System.err.println("Unable to bind to socket at port " + myListeningPort + 
-							" and get input stream. Stopping VRListerner. Stopping application.");
-					System.exit(0);
-				}
-				
-				while (true)
-				{
-					try {
-						recievedRequest = (VoteRequest) oInStream.readObject();
-						
-						//test receiver
-						System.out.println(recievedRequest.toString());
-						break;
-						
-					} catch (ClassNotFoundException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-				}
-				
-			}
-			
-			
-		}; 
+
+	@Override
+	public void run() {
+		System.out.println("Started a thread for a client");
 		
-		return vrlRunnable;		
-	}
-	
-	public Runnable getVRListener()
-	{
-		return this.myVRListener;
+		//must create object output stream on both sides before we can proceed
+		try {
+			oOutStream = new ObjectOutputStream(this.mySocket.getOutputStream());
+			oInStream = new ObjectInputStream(this.mySocket.getInputStream());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		//Test - Dump output
+		try {
+			VoteRequest recievedRequest = (VoteRequest) oInStream.readObject();
+			
+			//test receiver
+			System.out.println("Received VoteRequest Packet");
+			System.out.println(recievedRequest.toString());
+		
+			
+		} catch (ClassNotFoundException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 }

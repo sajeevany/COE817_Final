@@ -12,7 +12,7 @@ public class VoteRequest implements Serializable{
 	//enum of possible candidates in election
 	public static enum voteID
 	{
-		Arjun, Sajeevan, Krishna, Anmol
+		ARJUN, SAJEEVAN, KRISHNA, ANMOL
 	}
 	
 	//constructor to be used by client during first request to CLA

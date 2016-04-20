@@ -36,13 +36,13 @@ import voteserver.VoteRequest;
 public class Client// implements Runnable
 {
 	private final static String algorithm = "RSA";
-	private RSAPrivateKey privKey;
+	private static RSAPrivateKey privKey;
 	private static PublicKey pubKey;
-	private final String publicKeyString = "public_key_Server";
-	private final String privateKeyString = "private_key_Client";
-	private final String desAlgorithm = "DES";
-	private final String keyString = "des_key";
-	private SecretKey secretKey;
+	private final static String publicKeyString = "public_key_Server";
+	private final static String privateKeyString = "private_key_Client";
+	private final static String desAlgorithm = "DES";
+	private final static String keyString = "des_key";
+	private static SecretKey secretKey;
     
     public static void main(String[] args) throws IOException {
         //1. Send a request to vote to the CLA.

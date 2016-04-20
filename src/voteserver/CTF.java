@@ -59,7 +59,7 @@ public class CTF {
 	public byte[] acceptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException
 	{
 		//get the secret key from CLA for client
-		this.secretKey = CLA.getInstance().getEncryptedSessionKey();
+		this.secretKey = CLA.getInstance().getEncryptedSecretKey();
 		
 		//decrypt data
 		String returnMessage = "default message";

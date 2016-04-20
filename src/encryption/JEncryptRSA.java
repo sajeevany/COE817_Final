@@ -4,6 +4,7 @@ package encryption;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
@@ -150,6 +151,32 @@ public class JEncryptRSA {
              // execute Encrypt
              byte[] cipherText = cipher.doFinal(messageBytes);
              return cipherText;
+    }
+        
+    public static byte[] encrypt(Key key, byte[] text, String algorithm) { //Used for the RSA encryption.
+        byte[] encrypt = null;
+        try {
+            Cipher cipher = Cipher.getInstance(algorithm);
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            encrypt = cipher.doFinal(text);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+        
+        return encrypt;
+    }
+          
+     public static byte[] decrypt(Key key, byte[] text, String algorithm) { //Used for the RSA decryption.
+        byte[] decrypt = null;
+        try {
+            Cipher cipher = Cipher.getInstance(algorithm);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            decrypt = cipher.doFinal(text);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+        
+        return decrypt;
     }
 
     public static byte[] encryptRSASigned(String message, BigInteger pubExp, BigInteger modulus) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

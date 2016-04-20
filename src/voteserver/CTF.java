@@ -29,9 +29,7 @@ public class CTF {
 	private SecretKey ctfCommsSecretKey;
 	
 	private CTF(){};
-	//TODO make constructor
-		//get instance of CLA
-		//get list of eligible votes
+	
 	public static CTF getInstance()
 	{
 		if (instance == null)
@@ -48,8 +46,10 @@ public class CTF {
 		VoteRequest decryptedVoteRequest = decryptVoteRequest(voteRequest);
 		boolean isValid = validateVoteRequest(decryptedVoteRequest);
 		
-		//get the secret key from CLA
+		//get the secret key from CLA for client
 		
+		
+		//test the validity of the vote request
 		if (isValid)
 		{
 			int error = logVote(decryptedVoteRequest.getMyVote());

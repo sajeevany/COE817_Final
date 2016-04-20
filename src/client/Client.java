@@ -56,15 +56,31 @@ public class Client// implements Runnable
         String myUserInfo = "Client1@Password";
         byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
         
-        byte[] fromCLA1 = CLA.getAuthenticatedSessionKey(encryptedString);
-        byte[] desKey = JEncryptRSA.decrypt(privKey, fromCLA1, algorithm);
-        secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
+        //TODO get secret key and the validation number
+        ArrayList<byte[]> fromCLA1 = CLA.getAuthenticatedSessionKey(encryptedString);
+        
+        //TODO decrypt secret key and vNum
+	        //byte[] desKey = JEncryptRSA.decrypt(privKey, fromCLA1, algorithm);
+	        //secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
         
         //comms
+        //TODO if vNUm = 0 fail fast
+        
+        //TODO if vNum = ++ able to vote
+        
+        //TODO create voterequest as byte array
+        
+        //TODO encrypt VR with shared key
+        
+        //TODO send encrypted VR to CTF
+        
+        //TODO Listen for response + close
+        
+        /*
         byte[] toCLA1 = JEncrypDES.encryptDES("Gumi is love. Gumi is life.", secretKey);
         byte[] fromCLA2 = CLA.test2(toCLA1);
         String fromCLAString = new String(JEncrypDES.decryptDES(fromCLA2, secretKey));
-        System.out.println(fromCLAString);
+        System.out.println(fromCLAString);*/
     }
 	
    private  static void getKeysFromFiles(){

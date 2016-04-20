@@ -14,6 +14,7 @@ import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.crypto.Cipher;
@@ -25,6 +26,8 @@ public class CLA //implements Runnable
 {
     //2. Must check to see if the client has voted already. If they haven't voted yet, then give them a validation number.
     
+	//TODO make singleton
+	
         static String algorithm = "RSA";
    static RSAPrivateKey privKey;
     static PublicKey pubKey;
@@ -81,7 +84,9 @@ public class CLA //implements Runnable
         return toClient;
     }
     
-        public static byte[] getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
+    	//TODO 
+    	//return E(pubKey, secretKey)||E(secretKey, validation number)
+        public static ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
             
             if (pubKey == null && privKey == null && secretKey == null) {
             	getKeysFromFiles();
@@ -95,7 +100,7 @@ public class CLA //implements Runnable
             
             byte[] toClient = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
             //System.out.println("Start");
-            return toClient;
+            return null;
         }
 
     private static void getDesKeysFromFiles() { //Here just in case.

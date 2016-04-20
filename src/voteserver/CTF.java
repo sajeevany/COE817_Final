@@ -69,7 +69,7 @@ public class CTF {
 		//test the validity of the vote request
 		if (isValid)
 		{
-			int error = logVote(decryptedVoteRequest.getMyVote());
+			int error = logVote(decryptedVoteRequest.getClientID(),decryptedVoteRequest.getMyVote());
 			
 			if (error == 0) 
 				returnMessage = "Vote logged. Your vote was " + decryptedVoteRequest.getMyVote().toString();
@@ -149,10 +149,10 @@ public class CTF {
 	}
 
 	//assumption is that client has not already voted
-	public int logVote(voteID voteID)
+	public int logVote(String clientID, voteID voteID)
 	{
 		try {
-			Files.write(Paths.get(this.logFile), voteID.toString().getBytes(), StandardOpenOption.APPEND);
+			Files.write(Paths.get(this.logFile), (clientID + "," + voteID.toString()).getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.err.println("Unable to write to VoteLog.txt");

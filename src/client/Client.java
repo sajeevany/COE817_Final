@@ -1,36 +1,22 @@
 package client;
 
-import encryption.JEncrypDES;
-import encryption.JEncryptRSA;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.StringTokenizer;
-import java.util.concurrent.ArrayBlockingQueue;
-import javax.crypto.Cipher;
+
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
+import encryption.JEncrypDES;
+import encryption.JEncryptRSA;
 import voteserver.CLA;
 import voteserver.CTF;
 import voteserver.VoteRequest;
@@ -46,8 +32,8 @@ public class Client// implements Runnable
 	private final static String desAlgorithm = "DES";
 	private final static String keyString = "des_key";
 	private static SecretKey secretKey;
-        private static String clientID = "c0";
-        private static String password = "p0";
+    private static String clientID = "c0";
+    private static String password = "p0";
         
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {

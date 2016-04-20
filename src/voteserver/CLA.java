@@ -38,7 +38,7 @@ public class CLA // implements Runnable
 	private String clientId;
 	private String password;
 	private String validationNumber;
-	private final String clientList = "keyFile";
+	private final String clientList = "clientList";
 	private final String voteLog = "VoteLog.txt";
 	private Map<String, String> userMap = new HashMap<String, String>();
 
@@ -119,6 +119,7 @@ public class CLA // implements Runnable
 			checked = checkUserInfo(clientId, password);
 		} catch (Exception e) {
 			System.out.println(e.toString());
+			e.printStackTrace();
 		}
 
 		boolean haveTheyVotedYet = true;
@@ -134,12 +135,14 @@ public class CLA // implements Runnable
 			byte[] validationNumber = JEncrypDES.encryptDES("1", secretKey);
 			toClient.add(encryptedDESKey);
 			toClient.add(validationNumber);
+			this.validationNumber = "1";
 			return toClient;
 		} else {
 			byte[] encryptedDESKey = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
 			byte[] validationNumber = JEncrypDES.encryptDES("0", secretKey);
 			toClient.add(encryptedDESKey);
 			toClient.add(validationNumber);
+			this.validationNumber = "0";
 			return toClient;
 		}
 

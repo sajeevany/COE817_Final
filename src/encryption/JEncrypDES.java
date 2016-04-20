@@ -15,7 +15,7 @@ import javax.crypto.SecretKey;
 
 public class JEncrypDES {
 
-	public byte targetAppExpectedNounce;
+	//public byte targetAppExpectedNounce;
 	
     //desKeygen() returns a Secret Key Object, need to be used to encrypt and decrypt
     // encryptMessage takes in string and returns a Byte array
@@ -29,7 +29,7 @@ public class JEncrypDES {
       //  String output = decryptDES(encryptedMessage , nounce, newKey);
 
     
-    public SecretKey desKeyGen() throws NoSuchAlgorithmException {
+    public static SecretKey desKeyGen() throws NoSuchAlgorithmException {
 
      //init keygenerator, Object contains functionality to create keys
      KeyGenerator keygen = KeyGenerator.getInstance("DES");
@@ -75,8 +75,65 @@ public class JEncrypDES {
 
     }
 
+      public static byte[] encryptDES(String message, SecretKey key) { //Separate method that encrypts using DES without a nonce.
+
+     try {
+      //Cipher object contains Cryptographic cipher functionality
+      Cipher desObject;
+      // Specify Cipher params
+      // DES, ECB Electronic Codebook mode, PKCS5Padding means With Padding, 
+      desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
+
+      //convert message to byte array, Cipher Methods take Byte Arrays as parameters
+
+      byte[] messageBytes = Arrays.copyOf(message.getBytes(), message.getBytes().length + 2);
+      //messageBytes[messageBytes.length - 2] = newNounce;
+      //messageBytes[messageBytes.length - 1] = expectedNounce;
+      //init cipher encrpyt more with Generated key
+      desObject.init(Cipher.ENCRYPT_MODE, key);
+      // doFinal runs multi part Encryption 
+      byte[] bytesEncrypted = desObject.doFinal(messageBytes);
+      return bytesEncrypted;
+
+
+     } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+
+      System.out.println(e);
+      return null;
+     }
+
+
+    }
+    
     // Nounce value must be equal to that of the message 
     // this method returns a String
+          public static String decryptDES(byte[] encryptedMessage, SecretKey key) { //Separate method that decrypts using DES without a nonce.
+
+     try {
+      //Cipher object contains Cryptographic cipher functionality
+      Cipher desObject;
+      // Specify Cipher params
+      // DES, ECB Electronic Codebook mode, PKCS5Padding means With Padding, 
+      desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
+
+      // init and execute Decypher mode, using same key
+      desObject.init(Cipher.DECRYPT_MODE, key);
+      byte[] bytesDecrypted = desObject.doFinal(encryptedMessage);
+
+       //Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 3);
+       // Converts Bytes to output string
+       String outputText = new String( Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 2), "UTF-8");
+       //this.targetAppExpectedNounce = bytesDecrypted[bytesDecrypted.length - 2];
+       return outputText;
+      
+
+     } catch (NoSuchAlgorithmException | UnsupportedEncodingException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+
+      System.out.println(e);
+      return null;
+     }
+    }
+      
     public String decryptDES(byte[] encryptedMessage, int expectedNounce, SecretKey key) {
 
      try {
@@ -97,7 +154,7 @@ public class JEncrypDES {
        //Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 3);
        // Converts Bytes to output string
        String outputText = new String( Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 2), "UTF-8");
-       this.targetAppExpectedNounce = bytesDecrypted[bytesDecrypted.length - 2];
+       //this.targetAppExpectedNounce = bytesDecrypted[bytesDecrypted.length - 2];
        return outputText;
       }
 

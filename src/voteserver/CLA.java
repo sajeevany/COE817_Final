@@ -1,103 +1,116 @@
 package voteserver;
 
+import encryption.JEncrypDES;
+import encryption.JEncryptRSA;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.SecretKeySpec;
 
-public class CLA implements Runnable{
-
-	private final int myConnectionRequestListeningPort = 10901;
-	private final int maximumClientHandlerThreads = 5;
-	
-	private ClientHandler vRListener = null;
-	private ServerSocket myServerCRLSocket;
-	private ExecutorService executor = Executors.newFixedThreadPool(maximumClientHandlerThreads);
-	
-	private static CLA myInstance = null;
-	private CLA()
-	{
-		//bind socket for listening
-		try{
-			this.myServerCRLSocket = new ServerSocket(myConnectionRequestListeningPort);
-			System.out.println("Accepting incomming connections");
-			
-		}catch(IOException ioe)
-		{
-			System.err.println("Unable to bind to socket at port " + myConnectionRequestListeningPort + 
-					" and get input stream. Stopping CLA application.");
-			ioe.printStackTrace();
-		}
-	}
-		
-	public static CLA getInstance()
-	{
-		if (myInstance == null)
-		{
-			myInstance = new CLA();
-		}
-		
-		return myInstance;
-	}
-	
-	@Override
-	public void run() {
-		//accept connections and fork thread to handle client
-		while(true)
-		{
-			try {
-				Socket clientHandlerSocket = myServerCRLSocket.accept(); //blocking method
-				executor.execute(new ClientHandler(clientHandlerSocket));
-				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-}
-
-class ClientHandler implements Runnable
+public class CLA //implements Runnable
 {
-	private Socket mySocket = null;
-	ObjectInputStream oInStream = null;
-	ObjectOutputStream oOutStream = null;
-	
-	public ClientHandler(Socket myClientHandlingSocket) throws IOException 
-	{
-		this.mySocket = myClientHandlingSocket;
-	}
+    //2. Must check to see if the client has voted already. If they haven't voted yet, then give them a validation number.
+    
+        static String algorithm = "RSA";
+   static RSAPrivateKey privKey;
+    static PublicKey pubKey;
+    static String publicKeyString = "public_key_Client";
+   static String privateKeyString = "private_key_Server";
+   static String desAlgorithm = "DES";
+   static String keyString = "des_key";
+    static SecretKey secretKey;
+    
+    private static void getKeysFromFiles(){ //Gets the RSA keys.
+                    
+            //Get public key from file.
+        try {
+            FileInputStream keyfis = new FileInputStream(publicKeyString);
+            byte[] encKey = new byte[keyfis.available()];  
+            keyfis.read(encKey);
+            keyfis.close();
+            X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+            pubKey = keyFactory.generatePublic(pubKeySpec);
+            //System.out.println(pubKey);
+            
+            //Get private key from file.
+            FileInputStream keyfis2 = new FileInputStream(privateKeyString);
+            byte[] encKey2 = new byte[keyfis2.available()];  
+            keyfis2.read(encKey2);
+            keyfis2.close();
+            PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(encKey2);
+            KeyFactory keyFactory2 = KeyFactory.getInstance(algorithm);
+             privKey = (RSAPrivateKey)keyFactory2.generatePrivate(privKeySpec);
+            //System.out.println(privKey);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+    
+    public static byte[] getRequestToVote() {
+        
+        return new byte[0];
+    }
+    
+    public static byte[] test2(byte[] encrypted) {
+        
+        if (secretKey == null) {
+            getDesKeysFromFiles();
+            //System.out.println("Keys were null");
+        }
+        
+        String fromClient = new String(JEncrypDES.decryptDES(encrypted, secretKey));
+        System.out.println(fromClient);
+        
+        byte[] toClient = JEncrypDES.encryptDES("I gotcha bud.", secretKey);
+        //System.out.println("Test 2");
+        return toClient;
+    }
+    
+        public static byte[] start() { //Generates a new DES key and sends that to the client.
+            
+             if (pubKey == null && privKey == null && secretKey == null) {
+            getKeysFromFiles();
+            try {
+                secretKey = JEncrypDES.desKeyGen();
+            } catch (Exception e) {
+                
+            }
+            //System.out.println("Keys were null");
+        }
+            
+            byte[] toClient = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
+            //System.out.println("Start");
+            return toClient;
+        }
 
-	@Override
-	public void run() {
-		System.out.println("Started a thread for a client");
-		
-		//must create object output stream on both sides before we can proceed
-		try {
-			oOutStream = new ObjectOutputStream(this.mySocket.getOutputStream());
-			oInStream = new ObjectInputStream(this.mySocket.getInputStream());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		//Test - Dump output
-		try {
-			VoteRequest recievedRequest = (VoteRequest) oInStream.readObject();
-			
-			//test receiver
-			System.out.println("Received VoteRequest Packet");
-			System.out.println(recievedRequest.toString());
-		
-			
-		} catch (ClassNotFoundException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
-	
+    private static void getDesKeysFromFiles() { //Here just in case.
+        try {
+        FileInputStream keyfis = new FileInputStream(keyString);
+            byte[] encKey = new byte[keyfis.available()];  
+            keyfis.read(encKey);
+            keyfis.close();
+            SecretKeySpec keySpec = new SecretKeySpec(encKey, desAlgorithm);
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(desAlgorithm);
+            secretKey = keyFactory.generateSecret(keySpec);
+            //System.out.println(secretKey);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
 }
+

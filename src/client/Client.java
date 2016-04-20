@@ -35,14 +35,14 @@ import voteserver.VoteRequest;
 
 public class Client// implements Runnable
 {
-	static String algorithm = "RSA";
-	static RSAPrivateKey privKey;
-	static PublicKey pubKey;
-	static String publicKeyString = "public_key_Server";
-	static String privateKeyString = "private_key_Client";
-	static String desAlgorithm = "DES";
-	static String keyString = "des_key";
-	static SecretKey secretKey;
+	private final static String algorithm = "RSA";
+	private RSAPrivateKey privKey;
+	private static PublicKey pubKey;
+	private final String publicKeyString = "public_key_Server";
+	private final String privateKeyString = "private_key_Client";
+	private final String desAlgorithm = "DES";
+	private final String keyString = "des_key";
+	private SecretKey secretKey;
     
     public static void main(String[] args) throws IOException {
         //1. Send a request to vote to the CLA.
@@ -57,7 +57,10 @@ public class Client// implements Runnable
         byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
         
         //TODO get secret key and the validation number
-        ArrayList<byte[]> fromCLA1 = CLA.getAuthenticatedSessionKey(encryptedString);
+        ArrayList<byte[]> claResponse = CLA.getAuthenticatedSessionKey(encryptedString);
+        byte[] sessionSecretKey = claResponse.get(0);
+        int validationNumber = Integer.parseInt(claResponse.get(1).toString());
+        
         
         //TODO decrypt secret key and vNum
 	        //byte[] desKey = JEncryptRSA.decrypt(privKey, fromCLA1, algorithm);

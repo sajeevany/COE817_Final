@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import javax.crypto.SecretKey;
 
 import encryption.JEncrypDES;
+import encryption.JEncryptRSA;
+import javax.crypto.spec.SecretKeySpec;
 import voteserver.VoteRequest.voteID;
 
 //TODO hard code file names for public/private key parsing
@@ -34,7 +36,7 @@ public class CTF {
 	private SecretKey secretKey;
 	private SecretKey ctfCommsSecretKey;
 	
-	private final String publicKeyString = "public_key_Client";
+	private final String publicKeyString = "public_key_Server";
 	private final String privateKeyString = "private_key_Server";   
 	private final String algorithm = "RSA";
 	private RSAPrivateKey privKey;
@@ -59,7 +61,10 @@ public class CTF {
 	public byte[] acceptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException
 	{
 		//get the secret key from CLA for client
-		this.secretKey = CLA.getInstance().getEncryptedSecretKey();
+		//this.secretKey = CLA.getInstance().getEncryptedSecretKey();
+            byte[] keyFromCLA = CLA.getInstance().getEncryptedSecretKey();
+            byte[] desKey = JEncryptRSA.decrypt(privKey, keyFromCLA, algorithm);
+            this.secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
 		
 		//decrypt data
 		String returnMessage = "default message";

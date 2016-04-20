@@ -2,7 +2,10 @@ package voteserver;
 
 import encryption.JEncrypDES;
 import encryption.JEncryptRSA;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -15,6 +18,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.crypto.Cipher;
@@ -36,6 +40,43 @@ public class CLA //implements Runnable
    static String desAlgorithm = "DES";
    static String keyString = "des_key";
     static SecretKey secretKey;
+    private static CLA instance = null;
+    private String clientId;
+    private String password;
+    private String validationNumber;
+    private String clientList = "keyFile";
+
+    private boolean checkUserInfo(String clientId, String password) throws Exception{
+       
+        return false;
+    }
+    
+    private boolean checkIfTheyHaveVoted() {
+        
+        return false;
+    }
+    
+    private CLA() {
+        
+    }
+    
+    public static CLA getInstance() {
+        
+        if (instance == null) {
+            instance = new CLA();
+        }
+        return instance;
+    }
+    
+    public ArrayList<String> getUAV() {
+        
+        ArrayList<String> toCTF = new ArrayList();
+        toCTF.add(this.clientId);
+        toCTF.add(this.password);
+        toCTF.add(this.validationNumber);
+        
+        return toCTF;
+    }
     
     private static void getKeysFromFiles(){ //Gets the RSA keys.
                     
@@ -64,58 +105,55 @@ public class CLA //implements Runnable
         }
     }
     
-    public static byte[] getRequestToVote() {
-        
-        return new byte[0];
-    }
-    
-    public static byte[] test2(byte[] encrypted) {
-        
-        if (secretKey == null) {
-            getDesKeysFromFiles();
-            //System.out.println("Keys were null");
-        }
-        
-        String fromClient = new String(JEncrypDES.decryptDES(encrypted, secretKey));
-        System.out.println(fromClient);
-        
-        byte[] toClient = JEncrypDES.encryptDES("I gotcha bud.", secretKey);
-        //System.out.println("Test 2");
-        return toClient;
-    }
-    
     	//TODO 
     	//return E(pubKey, secretKey)||E(secretKey, validation number)
-        public static ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
+        public ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
             
-            if (pubKey == null && privKey == null && secretKey == null) {
+            if (pubKey == null && privKey == null) {
             	getKeysFromFiles();
-            try {
+            } if (secretKey == null) {
+           
+                try {
                 secretKey = JEncrypDES.desKeyGen();
-            } catch (Exception e) {
                 
+            } catch (Exception e) {
+                System.out.println(e.toString());
             }
-            //System.out.println("Keys were null");
         }
             
-            byte[] toClient = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
-            //System.out.println("Start");
-            return null;
-        }
+         String fromClient = new String(JEncryptRSA.decrypt(privKey, encryptedString, algorithm)); 
+         this.clientId = fromClient.substring(0, fromClient.indexOf("@"));
+         this.password = fromClient.substring(fromClient.indexOf("@") + 1, fromClient.length());
+         boolean checked = false;
+         
+         try {
+         checked = checkUserInfo(clientId, password);
+         } catch (Exception e) {
+             System.out.println(e.toString());
+         }
+         
+         boolean haveTheyVotedYet = true;
+         if (checked) {
+             haveTheyVotedYet = checkIfTheyHaveVoted();
+         } else {
+             return null;
+         }
+         
+         ArrayList<byte[]> toClient = new ArrayList();
+         if (!haveTheyVotedYet) {
+             byte[] encryptedDESKey = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
+             byte[] validationNumber = JEncrypDES.encryptDES("1", secretKey);
+            toClient.add(encryptedDESKey);
+            toClient.add(validationNumber);
+                        return toClient;
+         } else {
+             byte[] encryptedDESKey = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
+             byte[] validationNumber = JEncrypDES.encryptDES("0", secretKey);
+            toClient.add(encryptedDESKey);
+            toClient.add(validationNumber);
+                        return toClient;
+         }
 
-    private static void getDesKeysFromFiles() { //Here just in case.
-        try {
-        FileInputStream keyfis = new FileInputStream(keyString);
-            byte[] encKey = new byte[keyfis.available()];  
-            keyfis.read(encKey);
-            keyfis.close();
-            SecretKeySpec keySpec = new SecretKeySpec(encKey, desAlgorithm);
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(desAlgorithm);
-            secretKey = keyFactory.generateSecret(keySpec);
-            //System.out.println(secretKey);
-        } catch (Exception e) {
-            System.out.println(e.toString());
         }
-    }
 }
 

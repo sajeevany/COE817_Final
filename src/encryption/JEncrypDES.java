@@ -104,6 +104,26 @@ public class JEncrypDES {
 
 
     }
+      
+     public static byte[] encryptDESAsBytes(byte[] message, SecretKey key) { //Separate method that encrypts using DES without a nonce.
+
+		 try {
+		  Cipher desObject; 
+		  desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
+		  
+		  desObject.init(Cipher.ENCRYPT_MODE, key);
+		   
+		  byte[] bytesEncrypted = desObject.doFinal(message);
+		  return bytesEncrypted;
+		
+		
+		 } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+		
+		  System.out.println(e);
+		  return null;
+		 }
+	}
+    	    
     
 	public static String decryptDES(byte[] encryptedMessage, SecretKey key) {
 

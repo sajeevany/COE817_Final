@@ -105,34 +105,51 @@ public class JEncrypDES {
 
     }
     
-    // Nounce value must be equal to that of the message 
-    // this method returns a String
-          public static String decryptDES(byte[] encryptedMessage, SecretKey key) { //Separate method that decrypts using DES without a nonce.
+	public static String decryptDES(byte[] encryptedMessage, SecretKey key) {
 
-     try {
-      //Cipher object contains Cryptographic cipher functionality
-      Cipher desObject;
-      // Specify Cipher params
-      // DES, ECB Electronic Codebook mode, PKCS5Padding means With Padding, 
-      desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
+		try {
+			// Cipher object contains Cryptographic cipher functionality
+			Cipher desObject;
+			// Specify Cipher params
+			// DES, ECB Electronic Codebook mode, PKCS5Padding means With
+			// Padding,
+			desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
 
-      // init and execute Decypher mode, using same key
-      desObject.init(Cipher.DECRYPT_MODE, key);
-      byte[] bytesDecrypted = desObject.doFinal(encryptedMessage);
+			// init and execute Decypher mode, using same key
+			desObject.init(Cipher.DECRYPT_MODE, key);
+			byte[] bytesDecrypted = desObject.doFinal(encryptedMessage);
 
-       //Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 3);
-       // Converts Bytes to output string
-       String outputText = new String( Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 2), "UTF-8");
-       //this.targetAppExpectedNounce = bytesDecrypted[bytesDecrypted.length - 2];
-       return outputText;
-      
+			// Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 3);
+			// Converts Bytes to output string
+			String outputText = new String(Arrays.copyOf(bytesDecrypted, bytesDecrypted.length - 2), "UTF-8");
+			// this.targetAppExpectedNounce =
+			// bytesDecrypted[bytesDecrypted.length - 2];
+			return outputText;
 
-     } catch (NoSuchAlgorithmException | UnsupportedEncodingException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchAlgorithmException | UnsupportedEncodingException | NoSuchPaddingException | InvalidKeyException
+				| IllegalBlockSizeException | BadPaddingException e) {
 
-      System.out.println(e);
-      return null;
-     }
-    }
+			System.out.println(e);
+			return null;
+		}
+	}
+	
+	public static byte[] decryptDESAsBytes(byte[] encryptedMessage, SecretKey key) {
+
+		try {
+			Cipher desObject;
+			desObject = Cipher.getInstance("DES/ECB/PKCS5Padding");
+
+			desObject.init(Cipher.DECRYPT_MODE, key);
+			return desObject.doFinal(encryptedMessage);
+
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+				| IllegalBlockSizeException | BadPaddingException e) {
+
+			System.out.println(e);
+			return null;
+		}
+	}
       
     public String decryptDES(byte[] encryptedMessage, int expectedNounce, SecretKey key) {
 

@@ -42,12 +42,13 @@ public class CTF {
 	
 	public byte[] acceptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException
 	{
+		//get the secret key from CLA for client
+			
+		
+		//decrypt data
 		String returnMessage = "default message";
 		VoteRequest decryptedVoteRequest = decryptVoteRequest(voteRequest);
 		boolean isValid = validateVoteRequest(decryptedVoteRequest);
-		
-		//get the secret key from CLA for client
-		
 		
 		//test the validity of the vote request
 		if (isValid)
@@ -100,8 +101,7 @@ public class CTF {
 	}
 	
 	private VoteRequest decryptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException {
-				
-		ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(voteRequest));
+		ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(JEncrypDES.decryptDESAsBytes(voteRequest, this.secretKey)));
 		return (VoteRequest) objIn.readObject();
 	}
 

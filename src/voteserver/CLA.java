@@ -29,8 +29,10 @@ public class CLA // implements Runnable
 	static String algorithm = "RSA";
 	static RSAPrivateKey privKey;
 	static PublicKey pubKey;
+        static PublicKey personalPublicKey;
 	static String publicKeyString = "public_key_Client";
 	static String privateKeyString = "private_key_Server";
+        static String publicServerString = "public_key_Server";
 	static String desAlgorithm = "DES";
 	static String keyString = "des_key";
 	static SecretKey secretKey;
@@ -62,8 +64,11 @@ public class CLA // implements Runnable
 		return toCTF;
 	}
 
-	public SecretKey getEncryptedSecretKey() {
-		return secretKey;
+	public byte[] getEncryptedSecretKey() {
+            
+                                byte[] key = JEncryptRSA.encrypt(personalPublicKey, secretKey.getEncoded(), algorithm);
+            
+		return key;
 	}
 
 	private static void getKeysFromFiles() { // Gets the RSA keys.
@@ -87,6 +92,14 @@ public class CLA // implements Runnable
 			PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(encKey2);
 			KeyFactory keyFactory2 = KeyFactory.getInstance(algorithm);
 			privKey = (RSAPrivateKey) keyFactory2.generatePrivate(privKeySpec);
+                        
+                        FileInputStream keyfis3 = new FileInputStream(publicServerString);
+			byte[] encKey3 = new byte[keyfis3.available()];
+			keyfis3.read(encKey3);
+			keyfis3.close();
+			X509EncodedKeySpec pubKeySpec2 = new X509EncodedKeySpec(encKey3);
+			KeyFactory keyFactory3 = KeyFactory.getInstance(algorithm);
+			personalPublicKey = keyFactory.generatePublic(pubKeySpec2);
 			// System.out.println(privKey);
 		} catch (Exception e) {
 			System.out.println(e.toString());

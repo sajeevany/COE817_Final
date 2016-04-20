@@ -1,25 +1,30 @@
 package voteserver;
 
+import encryption.JEncrypDES;
+import encryption.JEncryptRSA;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-
-import client.Client;
-import encryption.JEncrypDES;
-import encryption.JEncryptRSA;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.SecretKeySpec;
 
 public class CLA //implements Runnable
 {
@@ -27,22 +32,30 @@ public class CLA //implements Runnable
     
 	//TODO make singleton
 	
-	static String algorithm = "RSA";
-   	static RSAPrivateKey privKey;
-   	static PublicKey pubKey;
-   	static String publicKeyString = "public_key_Client";
-   	static String privateKeyString = "private_key_Server";
-   	static String desAlgorithm = "DES";
-   	static String keyString = "des_key";
-   	static SecretKey secretKey;
-   	private static CLA instance = null;
-   	private String clientId;
-   	private String password;
-   	private String validationNumber;
-   	private final String clientList = "keyFile";
-   	private final String voteLog = "VoteLog.txt";
-   	private Map <String, String> userMap = new HashMap<String, String>();
-   	  
+        static String algorithm = "RSA";
+   static RSAPrivateKey privKey;
+    static PublicKey pubKey;
+    static String publicKeyString = "public_key_Client";
+   static String privateKeyString = "private_key_Server";
+   static String desAlgorithm = "DES";
+   static String keyString = "des_key";
+    static SecretKey secretKey;
+    private static CLA instance = null;
+    private String clientId;
+    private String password;
+    private String validationNumber;
+    private String clientList = "keyFile";
+
+    private boolean checkUserInfo(String clientId, String password) throws Exception{
+       
+        return false;
+    }
+    
+    private boolean checkIfTheyHaveVoted() {
+        
+        return false;
+    }
+    
     private CLA() {
         
     }
@@ -63,6 +76,10 @@ public class CLA //implements Runnable
         toCTF.add(this.validationNumber);
         
         return toCTF;
+    }
+    
+    public SecretKey getEncryptedSecretKey() {
+        return secretKey;
     }
     
     private static void getKeysFromFiles(){ //Gets the RSA keys.
@@ -92,8 +109,9 @@ public class CLA //implements Runnable
         }
     }
     
+    	//TODO 
     	//return E(pubKey, secretKey)||E(secretKey, validation number)
-        public ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) throws IOException { //Generates a new DES key and sends that to the client.
+        public ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
             
             if (pubKey == null && privKey == null) {
             	getKeysFromFiles();
@@ -120,7 +138,7 @@ public class CLA //implements Runnable
          
          boolean haveTheyVotedYet = true;
          if (checked) {
-             haveTheyVotedYet = checkIfTheyHaveVoted(this.voteLog,clientId);
+             haveTheyVotedYet = checkIfTheyHaveVoted();
          } else {
              return null;
          }
@@ -141,68 +159,5 @@ public class CLA //implements Runnable
          }
 
         }
-        
-        //Validate user name and password
-        private boolean checkUserInfo(String clientId, String password) throws Exception{
-        	
-        	this.userMap = getPopulatedClientMap(clientList);
-        	if (userMap.containsKey(clientId))
-        	{
-        		String expectedPassword = userMap.get(clientId);
-        		
-        		if (password.equals(expectedPassword))
-        		{
-        			return true;
-        		}
-        		else
-        		{
-        			return false;
-        		}
-        	}
-        	
-            return false;
-        }
-        
-        //returns hashmap of clientIDs and password
-        private Map<String, String> getPopulatedClientMap(String clientListFileName) throws IOException
-        {
-        	HashMap<String, String> userPasswordMap = new HashMap<>();
-        	
-        	BufferedReader clientListReader = new BufferedReader(new FileReader(clientListFileName));
-    		String line = null;
-    		
-    		while((line = clientListReader.readLine())!=null)
-    		{
-    			StringTokenizer sTok = new StringTokenizer(line, ",");
-    			userPasswordMap.put(sTok.nextToken(), sTok.nextToken());
-    		}
-        	
-    		clientListReader.close();
-    		
-			return userPasswordMap;	
-        }
-        
-        //validate if user has voted. 
-        private boolean checkIfTheyHaveVoted(String voteLogFileName, String clientID) throws IOException {
-            
-        	BufferedReader clientListReader = new BufferedReader(new FileReader(voteLogFileName));
-    		String line = null;
-    		
-    		while((line = clientListReader.readLine())!=null)
-    		{
-    			StringTokenizer sTok = new StringTokenizer(line, ",");
-    		
-    			if (sTok.nextToken().equals(clientID))
-    			{
-    				return true;
-    			}
-    		}
-        	
-    		clientListReader.close();
-        	
-            return false;
-        }
-        
-        
 }
 

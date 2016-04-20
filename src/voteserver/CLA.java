@@ -81,10 +81,10 @@ public class CLA //implements Runnable
         return toClient;
     }
     
-        public static byte[] start() { //Generates a new DES key and sends that to the client.
+        public static byte[] getAuthenticatedSessionKey(byte[] encryptedString) { //Generates a new DES key and sends that to the client.
             
-             if (pubKey == null && privKey == null && secretKey == null) {
-            getKeysFromFiles();
+            if (pubKey == null && privKey == null && secretKey == null) {
+            	getKeysFromFiles();
             try {
                 secretKey = JEncrypDES.desKeyGen();
             } catch (Exception e) {

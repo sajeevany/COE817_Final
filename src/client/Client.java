@@ -35,26 +35,32 @@ import voteserver.VoteRequest;
 
 public class Client// implements Runnable
 {
-    static String algorithm = "RSA";
-    static RSAPrivateKey privKey;
-    static PublicKey pubKey;
-    static String publicKeyString = "public_key_Server";
-   static String privateKeyString = "private_key_Client";
-   static String desAlgorithm = "DES";
-   static String keyString = "des_key";
-   static SecretKey secretKey;
+	static String algorithm = "RSA";
+	static RSAPrivateKey privKey;
+	static PublicKey pubKey;
+	static String publicKeyString = "public_key_Server";
+	static String privateKeyString = "private_key_Client";
+	static String desAlgorithm = "DES";
+	static String keyString = "des_key";
+	static SecretKey secretKey;
     
     public static void main(String[] args) throws IOException {
-                            //1. Send a request to vote to the CLA.
-                            //3. Get the validation number from the CLA.
-                            //4. Cast vote to CTF
-                            //6. Read response from CTF. Close program.
+        //1. Send a request to vote to the CLA.
+        //3. Get the validation number from the CLA.
+        //4. Cast vote to CTF
+        //6. Read response from CTF. Close program.
         //getDesKeysFromFiles();
         getKeysFromFiles();
         
-        byte[] fromCLA1 = CLA.start();
+        //handshake
+        String myUserInfo = "Client1@Password";
+        byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
+        
+        byte[] fromCLA1 = CLA.getAuthenticatedSessionKey(encryptedString);
         byte[] desKey = JEncryptRSA.decrypt(privKey, fromCLA1, algorithm);
         secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
+        
+        //comms
         byte[] toCLA1 = JEncrypDES.encryptDES("Gumi is love. Gumi is life.", secretKey);
         byte[] fromCLA2 = CLA.test2(toCLA1);
         String fromCLAString = new String(JEncrypDES.decryptDES(fromCLA2, secretKey));

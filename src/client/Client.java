@@ -57,7 +57,7 @@ public class Client// implements Runnable
         byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
         
         //TODO get secret key and the validation number
-        ArrayList<byte[]> claResponse = CLA.getAuthenticatedSessionKey(encryptedString);
+        ArrayList<byte[]> claResponse = CLA.getInstance().getAuthenticatedSessionKey(encryptedString);
         byte[] sessionSecretKey = claResponse.get(0);
         int validationNumber = Integer.parseInt(claResponse.get(1).toString());
         

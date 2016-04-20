@@ -5,12 +5,14 @@ import encryption.JEncryptRSA;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.Key;
@@ -30,6 +32,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
 import voteserver.CLA;
+import voteserver.CTF;
 import voteserver.VoteRequest;
 
 
@@ -43,47 +46,78 @@ public class Client// implements Runnable
 	private final static String desAlgorithm = "DES";
 	private final static String keyString = "des_key";
 	private static SecretKey secretKey;
+        private static String clientID = "c0";
+        private static String password = "p0";
+        
     
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         //1. Send a request to vote to the CLA.
         //3. Get the validation number from the CLA.
         //4. Cast vote to CTF
         //6. Read response from CTF. Close program.
-        //getDesKeysFromFiles();
+
         getKeysFromFiles();
         
         //handshake
-        String myUserInfo = "Client1@Password";
+        String myUserInfo = clientID + "@" + password;
         byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
         
         //TODO get secret key and the validation number
         ArrayList<byte[]> claResponse = CLA.getInstance().getAuthenticatedSessionKey(encryptedString);
-        byte[] sessionSecretKey = claResponse.get(0);
-        int validationNumber = Integer.parseInt(claResponse.get(1).toString());
         
+        if (claResponse == null) {
+            System.out.println("ID and password don't match.");
+            System.exit(0);
+        }
         
-        //TODO decrypt secret key and vNum
-	        //byte[] desKey = JEncryptRSA.decrypt(privKey, fromCLA1, algorithm);
-	        //secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
+        //They are a valid user.
+        byte[] sessionSecretKey = JEncryptRSA.decrypt(privKey, claResponse.get(0), algorithm);
+        secretKey = new SecretKeySpec(sessionSecretKey, 0, sessionSecretKey.length, desAlgorithm);
+        String validationNumberString = new String(JEncrypDES.decryptDES(claResponse.get(1), secretKey));
+        int validationNumber = Integer.parseInt(validationNumberString);
         
-        //comms
-        //TODO if vNUm = 0 fail fast
+        if (validationNumber == 0) {
+            System.out.println("You have already voted.");
+            System.exit(0);
+        }
+
+        //They have not voted yet.
+         VoteRequest voteRequest = new VoteRequest(clientID, password, validationNumber, VoteRequest.voteID.KRISHNA);   
+         
+         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] bytesOfVoteRequest;
         
-        //TODO if vNum = ++ able to vote
+        try {
+                out = new ObjectOutputStream(bos);   
+                 out.writeObject(voteRequest);
+                 bytesOfVoteRequest = bos.toByteArray(); //Encrypt the bytes of the object.
+                 
+        } finally {
+                try {
+                 if (out != null) {
+                         out.close();
+                    }
+              } catch (IOException ex) {
+                      System.out.println(ex.toString());
+             }
+             try {
+             bos.close();
+             } catch (IOException ex) {
+                  System.out.println(ex.toString());
+             }
+        }
         
-        //TODO create voterequest as byte array
-        
-        //TODO encrypt VR with shared key
-        
-        //TODO send encrypted VR to CTF
-        
-        //TODO Listen for response + close
-        
-        /*
-        byte[] toCLA1 = JEncrypDES.encryptDES("Gumi is love. Gumi is life.", secretKey);
-        byte[] fromCLA2 = CLA.test2(toCLA1);
-        String fromCLAString = new String(JEncrypDES.decryptDES(fromCLA2, secretKey));
-        System.out.println(fromCLAString);*/
+        if (bytesOfVoteRequest == null) {
+            System.out.println("Couldn't create bytes of vote request.");
+            System.exit(0);
+        }
+               
+        byte[] voteRequestToCTF = JEncrypDES.encryptDESAsBytes(bytesOfVoteRequest, secretKey);                       
+        byte[] returnMessage = CTF.getInstance().acceptVoteRequest(voteRequestToCTF);
+        String messageFromCTF = new String(JEncrypDES.decryptDES(returnMessage, secretKey));
+        System.out.println(messageFromCTF);
+        System.exit(0);
     }
 	
    private  static void getKeysFromFiles(){
@@ -112,19 +146,4 @@ public class Client// implements Runnable
            System.out.println(e.toString());
        }
     }   
-
-    private static void getDesKeysFromFiles() { //Here just in case.
-        try {
-        FileInputStream keyfis = new FileInputStream(keyString);
-            byte[] encKey = new byte[keyfis.available()];  
-            keyfis.read(encKey);
-            keyfis.close();
-            SecretKeySpec keySpec = new SecretKeySpec(encKey, desAlgorithm);
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(desAlgorithm);
-            secretKey = keyFactory.generateSecret(keySpec);
-            //System.out.println(secretKey);
-        } catch (Exception e) {
-            System.out.println(e.toString());
-        }
-    }
 }

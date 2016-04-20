@@ -157,7 +157,7 @@ public class CTF {
 	public int logVote(String clientID, voteID voteID)
 	{
 		try {
-			Files.write(Paths.get(this.logFile), (clientID + "," + voteID.toString()).getBytes(), StandardOpenOption.APPEND);
+			Files.write(Paths.get(this.logFile), (clientID + "," + voteID.toString() + "\n").getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.err.println("Unable to write to VoteLog.txt");

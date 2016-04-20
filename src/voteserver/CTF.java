@@ -1,11 +1,17 @@
 package voteserver;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 
 import javax.crypto.SecretKey;
@@ -28,7 +34,17 @@ public class CTF {
 	private SecretKey secretKey;
 	private SecretKey ctfCommsSecretKey;
 	
-	private CTF(){};
+	private final String publicKeyString = "public_key_Client";
+	private final String privateKeyString = "private_key_Server";   
+	private final String algorithm = "RSA";
+	private RSAPrivateKey privKey;
+   	private PublicKey pubKey;
+	
+	private CTF()
+	{
+		//init pub/priv keys
+		this.getKeysFromFiles();
+	};
 	
 	public static CTF getInstance()
 	{
@@ -43,7 +59,7 @@ public class CTF {
 	public byte[] acceptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException
 	{
 		//get the secret key from CLA for client
-			
+		this.secretKey = CLA.getInstance().getEncryptedSessionKey();
 		
 		//decrypt data
 		String returnMessage = "default message";
@@ -69,6 +85,33 @@ public class CTF {
 		return JEncrypDES.encryptDES(returnMessage, secretKey);
 	}
 		
+	
+	 private void getKeysFromFiles(){ //Gets the RSA keys.
+		 
+         //Get public key from file.
+     try {
+         FileInputStream keyfis = new FileInputStream(publicKeyString);
+         byte[] encKey = new byte[keyfis.available()];  
+         keyfis.read(encKey);
+         keyfis.close();
+         X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+         KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+         pubKey = keyFactory.generatePublic(pubKeySpec);
+         //System.out.println(pubKey);
+         
+         //Get private key from file.
+         FileInputStream keyfis2 = new FileInputStream(privateKeyString);
+         byte[] encKey2 = new byte[keyfis2.available()];  
+         keyfis2.read(encKey2);
+         keyfis2.close();
+         PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(encKey2);
+         KeyFactory keyFactory2 = KeyFactory.getInstance(algorithm);
+          privKey = (RSAPrivateKey)keyFactory2.generatePrivate(privKeySpec);
+         //System.out.println(privKey);
+     } catch (Exception e) {
+         System.out.println(e.toString());
+     }
+ }
 	
 	/**
 	 * 

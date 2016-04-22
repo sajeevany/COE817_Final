@@ -12,6 +12,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 import javax.crypto.SecretKey;
@@ -23,8 +24,6 @@ public class CLA // implements Runnable
 {
 	// 2. Must check to see if the client has voted already. If they haven't
 	// voted yet, then give them a validation number.
-
-	// TODO make singleton
 
 	static String algorithm = "RSA";
 	static RSAPrivateKey privKey;
@@ -44,8 +43,9 @@ public class CLA // implements Runnable
 	private final String voteLog = "VoteLog.txt";
 	private Map<String, String> userMap = new HashMap<String, String>();
 
+	// Singleton object initialization
 	private CLA(){};
-
+	
 	public static CLA getInstance() {
 
 		if (instance == null) {
@@ -53,7 +53,8 @@ public class CLA // implements Runnable
 		}
 		return instance;
 	}
-
+	
+	
 	public ArrayList<String> getUAV() {
 
 		ArrayList<String> toCTF = new ArrayList();
@@ -66,8 +67,7 @@ public class CLA // implements Runnable
 
 	public byte[] getEncryptedSecretKey() {
             
-                                byte[] key = JEncryptRSA.encrypt(personalPublicKey, secretKey.getEncoded(), algorithm);
-            
+        byte[] key = JEncryptRSA.encrypt(personalPublicKey, secretKey.getEncoded(), algorithm);  
 		return key;
 	}
 
@@ -93,7 +93,7 @@ public class CLA // implements Runnable
 			KeyFactory keyFactory2 = KeyFactory.getInstance(algorithm);
 			privKey = (RSAPrivateKey) keyFactory2.generatePrivate(privKeySpec);
                         
-                        FileInputStream keyfis3 = new FileInputStream(publicServerString);
+            FileInputStream keyfis3 = new FileInputStream(publicServerString);
 			byte[] encKey3 = new byte[keyfis3.available()];
 			keyfis3.read(encKey3);
 			keyfis3.close();
@@ -106,7 +106,7 @@ public class CLA // implements Runnable
 		}
 	}
 
-	// TODO
+
 	// return E(pubKey, secretKey)||E(secretKey, validation number)
 	public ArrayList<byte[]> getAuthenticatedSessionKey(byte[] encryptedString) throws IOException { 
 
@@ -122,19 +122,20 @@ public class CLA // implements Runnable
 				System.out.println(e.toString());
 			}
 		}
-
+		// gets Username and pw sent by client, decrypts using private key
 		String fromClient = new String(JEncryptRSA.decrypt(privKey, encryptedString, algorithm));
 		this.clientId = fromClient.substring(0, fromClient.indexOf("@"));
 		this.password = fromClient.substring(fromClient.indexOf("@") + 1, fromClient.length());
 		boolean checked = false;
 
 		try {
+			// Check if Username and pw match, stored values
 			checked = checkUserInfo(clientId, password);
 		} catch (Exception e) {
 			System.out.println(e.toString());
 			e.printStackTrace();
 		}
-
+		// Check if user has already voted 
 		boolean haveTheyVotedYet = true;
 		if (checked) {
 			haveTheyVotedYet = checkIfTheyHaveVoted(this.voteLog, clientId);
@@ -143,14 +144,21 @@ public class CLA // implements Runnable
 		}
 
 		ArrayList<byte[]> toClient = new ArrayList();
+		// if they have not voted set validation number to 1 and give client secret key value (encrypted with des) 
 		if (!haveTheyVotedYet) {
 			byte[] encryptedDESKey = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
-			byte[] validationNumber = JEncrypDES.encryptDES("1", secretKey);
+			// Generate validation number for client
+			Random rand = new Random();
+			int  n = rand.nextInt(10) + 1;
+			this.validationNumber = String.valueOf(n);
+			//Encrypt validation number using DES/sessionkey
+			byte[] validationNumber = JEncrypDES.encryptDES(this.validationNumber, secretKey);
+			// give session key and validation number to client 
 			toClient.add(encryptedDESKey);
 			toClient.add(validationNumber);
-			this.validationNumber = "1";
 			return toClient;
 		} else {
+			// If they have already voted set validation number to 0
 			byte[] encryptedDESKey = JEncryptRSA.encrypt(pubKey, secretKey.getEncoded(), algorithm);
 			byte[] validationNumber = JEncrypDES.encryptDES("0", secretKey);
 			toClient.add(encryptedDESKey);

@@ -41,40 +41,54 @@ public class Client// implements Runnable
         //3. Get the validation number from the CLA.
         //4. Cast vote to CTF
         //6. Read response from CTF. Close program.
-
+    	
+    	// private_key_client and public_key_server keys 
         getKeysFromFiles();
         
         //handshake
+        // send hard coded user details ID and PW
         String myUserInfo = clientID + "@" + password;
+        
+        // Encrypt User info with CLA's public key
         byte[] encryptedString = JEncryptRSA.encrypt(pubKey, myUserInfo.getBytes(), algorithm);
         
-        //TODO get secret key and the validation number
+        
+        //Get authenticated session key from CLA, If userID and pw Exists and are correct
         ArrayList<byte[]> claResponse = CLA.getInstance().getAuthenticatedSessionKey(encryptedString);
         
+        //IF response is null the ID and pw are not legitamite 
         if (claResponse == null) {
             System.out.println("ID and password don't match.");
             System.exit(0);
         }
         
         //They are a valid user.
+        // Get Session key value from CLA, decrypt using CLA private key
         byte[] sessionSecretKey = JEncryptRSA.decrypt(privKey, claResponse.get(0), algorithm);
+        // initialize Secrey key object used by cryptography lib
         secretKey = new SecretKeySpec(sessionSecretKey, 0, sessionSecretKey.length, desAlgorithm);
+        // decrypt validation number from CLA 
         String validationNumberString = new String(JEncrypDES.decryptDES(claResponse.get(1), secretKey));
         int validationNumber = Integer.parseInt(validationNumberString);
         
+        // If the validation number was return as zero, means you have already voted
         if (validationNumber == 0) {
             System.out.println("You have already voted.");
             System.exit(0);
         }
 
         //They have not voted yet.
+        // Create VoteRequest object to be sent to CTF
+        //Validation number is for the CTF to check legitimacy, VoteRequest.voteID is the candidate being voted for
          VoteRequest voteRequest = new VoteRequest(clientID, password, validationNumber, VoteRequest.voteID.KRISHNA);   
          
+         //Initialize byte stream to send to CTF
          ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;
         byte[] bytesOfVoteRequest;
         
-        try {
+        try {	
+        		// send vote request to CTF, 
                 out = new ObjectOutputStream(bos);   
                  out.writeObject(voteRequest);
                  bytesOfVoteRequest = bos.toByteArray(); //Encrypt the bytes of the object.
@@ -82,6 +96,7 @@ public class Client// implements Runnable
         } finally {
                 try {
                  if (out != null) {
+                	 	// close stream
                          out.close();
                     }
               } catch (IOException ex) {
@@ -98,9 +113,11 @@ public class Client// implements Runnable
             System.out.println("Couldn't create bytes of vote request.");
             System.exit(0);
         }
-               
-        byte[] voteRequestToCTF = JEncrypDES.encryptDESAsBytes(bytesOfVoteRequest, secretKey);                       
+        //encrypt vote request 
+        byte[] voteRequestToCTF = JEncrypDES.encryptDESAsBytes(bytesOfVoteRequest, secretKey);         
+        // register vote with CLA
         byte[] returnMessage = CTF.getInstance().acceptVoteRequest(voteRequestToCTF);
+        // get message from CTF, decrypt using DES 
         String messageFromCTF = new String(JEncrypDES.decryptDES(returnMessage, secretKey));
         System.out.println(messageFromCTF);
         System.exit(0);

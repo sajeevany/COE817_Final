@@ -42,6 +42,7 @@ public class CTF {
 	private RSAPrivateKey privKey;
    	private PublicKey pubKey;
 	
+   	// initialize CTF singleton object 
 	private CTF()
 	{
 		//init pub/priv keys
@@ -61,7 +62,6 @@ public class CTF {
 	public byte[] acceptVoteRequest(byte[] voteRequest) throws ClassNotFoundException, IOException
 	{
 		//get the secret key from CLA for client
-		//this.secretKey = CLA.getInstance().getEncryptedSecretKey();
             byte[] keyFromCLA = CLA.getInstance().getEncryptedSecretKey();
             byte[] desKey = JEncryptRSA.decrypt(privKey, keyFromCLA, algorithm);
             this.secretKey = new SecretKeySpec(desKey, 0, desKey.length, desAlgorithm);
@@ -167,8 +167,6 @@ public class CTF {
 		
 		return 0;
 	}
-	
-	//TODO method to return response
 
 
 }
